@@ -9,8 +9,17 @@
 [green_agent]
 # The medical dialogue judge orchestrates evaluation of doctor-patient interactions
 # Register your judge agent at https://agentbeats.dev and add the ID here
-agentbeats_id = ""
-env = { API_KEY = "${API_KEY}", BASE_URL = "${BASE_URL}", DEFAULT_MODEL = "${DEFAULT_MODEL}", AZURE_OPENAI_API_VERSION = "${AZURE_OPENAI_API_VERSION}" }
+agentbeats_id = "019b8d9f-c98d-7191-a486-38f3247697f3"
+# Optional per-agent overrides: 
+# - PATIENT_API_KEY, 
+# - PATIENT_BASE_URL, 
+# - PATIENT_MODEL, 
+# - PATIENT_AZURE_API_VERSION,
+# - JUDGE_API_KEY, 
+# - JUDGE_BASE_URL, 
+# - JUDGE_MODEL, 
+# - JUDGE_AZURE_API_VERSION
+env = { API_KEY = "${API_KEY}", BASE_URL = "${BASE_URL}", DEFAULT_MODEL = "${DEFAULT_MODEL}", AZURE_OPENAI_API_VERSION = "${AZURE_OPENAI_API_VERSION}", PATIENT_API_KEY = "${PATIENT_API_KEY}", PATIENT_BASE_URL = "${PATIENT_BASE_URL}", PATIENT_MODEL = "${PATIENT_MODEL}", PATIENT_AZURE_API_VERSION = "${PATIENT_AZURE_API_VERSION}", JUDGE_API_KEY = "${JUDGE_API_KEY}", JUDGE_BASE_URL = "${JUDGE_BASE_URL}", JUDGE_MODEL = "${JUDGE_MODEL}", JUDGE_AZURE_API_VERSION = "${JUDGE_AZURE_API_VERSION}" }
 
 [[participants]]
 # Doctor agent being evaluated - submitters fill in their agent details
@@ -37,7 +46,7 @@ env = {}
 #   persona_ids = ["random"]  # Randomly select MBTI, gender, and case each run
 #   persona_ids = ["random_no_gender"]  # Randomly select MBTI and case (gender generated)
 
-persona_ids = ["random"]
+persona_ids = ["all"]
 
 # Maximum dialogue rounds per persona
 max_rounds = 10
