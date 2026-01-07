@@ -1,30 +1,30 @@
 [
   {
     "name": "Overall Performance",
-    "query": "SELECT results.participants.doctor AS agent_id, res.detail.mean_aggregate_score AS score, res.detail.timestamp AS timestamp FROM read_json_auto('results/*.json') AS results CROSS JOIN UNNEST(results.results) AS r(res) ORDER BY score DESC"
+    "query": "SELECT t.participants.doctor AS id, ROUND(AVG(r.res.detail.mean_aggregate_score), 2) AS \"Overall Score\", COUNT(DISTINCT r.res.detail.assessment_id) AS \"Assessments\" FROM results t CROSS JOIN UNNEST(t.results) AS r(res) GROUP BY id ORDER BY \"Overall Score\" DESC"
   },
   {
     "name": "Empathy Rankings",
-    "query": "SELECT results.participants.doctor AS agent_id, AVG(rep.overall_empathy) AS empathy_score, COUNT(*) AS sessions FROM read_json_auto('results/*.json') AS results CROSS JOIN UNNEST(results.results) AS r(res) CROSS JOIN UNNEST(res.detail.reports) AS rp(rep) WHERE rep.overall_empathy IS NOT NULL GROUP BY agent_id ORDER BY empathy_score DESC"
+    "query": "SELECT t.participants.doctor AS id, ROUND(AVG(rep.rep.overall_empathy), 2) AS \"Empathy Score\", COUNT(DISTINCT rep.rep.session_id) AS \"Sessions\" FROM results t CROSS JOIN UNNEST(t.results) AS r(res) CROSS JOIN UNNEST(r.res.detail.reports) AS rep(rep) WHERE rep.rep.overall_empathy IS NOT NULL GROUP BY id ORDER BY \"Empathy Score\" DESC"
   },
   {
     "name": "Persuasion Rankings",
-    "query": "SELECT results.participants.doctor AS agent_id, AVG(rep.overall_persuasion) AS persuasion_score, COUNT(*) AS sessions FROM read_json_auto('results/*.json') AS results CROSS JOIN UNNEST(results.results) AS r(res) CROSS JOIN UNNEST(res.detail.reports) AS rp(rep) WHERE rep.overall_persuasion IS NOT NULL GROUP BY agent_id ORDER BY persuasion_score DESC"
+    "query": "SELECT t.participants.doctor AS id, ROUND(AVG(rep.rep.overall_persuasion), 2) AS \"Persuasion Score\", COUNT(DISTINCT rep.rep.session_id) AS \"Sessions\" FROM results t CROSS JOIN UNNEST(t.results) AS r(res) CROSS JOIN UNNEST(r.res.detail.reports) AS rep(rep) WHERE rep.rep.overall_persuasion IS NOT NULL GROUP BY id ORDER BY \"Persuasion Score\" DESC"
   },
   {
     "name": "Safety Rankings",
-    "query": "SELECT results.participants.doctor AS agent_id, AVG(rep.overall_safety) AS safety_score, COUNT(*) AS sessions FROM read_json_auto('results/*.json') AS results CROSS JOIN UNNEST(results.results) AS r(res) CROSS JOIN UNNEST(res.detail.reports) AS rp(rep) WHERE rep.overall_safety IS NOT NULL GROUP BY agent_id ORDER BY safety_score DESC"
+    "query": "SELECT t.participants.doctor AS id, ROUND(AVG(rep.rep.overall_safety), 2) AS \"Safety Score\", COUNT(DISTINCT rep.rep.session_id) AS \"Sessions\" FROM results t CROSS JOIN UNNEST(t.results) AS r(res) CROSS JOIN UNNEST(r.res.detail.reports) AS rep(rep) WHERE rep.rep.overall_safety IS NOT NULL GROUP BY id ORDER BY \"Safety Score\" DESC"
   },
   {
     "name": "Success Rate",
-    "query": "SELECT results.participants.doctor AS agent_id, ROUND(SUM(CASE WHEN sess.final_outcome = 'patient_accepted' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS success_rate, COUNT(*) AS total_sessions FROM read_json_auto('results/*.json') AS results CROSS JOIN UNNEST(results.results) AS r(res) CROSS JOIN UNNEST(res.detail.sessions) AS s(sess) GROUP BY agent_id ORDER BY success_rate DESC"
+    "query": "SELECT t.participants.doctor AS id, ROUND(SUM(CASE WHEN rep.rep.final_outcome = 'patient_accepted' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS \"Success Rate (%)\", COUNT(*) AS \"Total Sessions\" FROM results t CROSS JOIN UNNEST(t.results) AS r(res) CROSS JOIN UNNEST(r.res.detail.reports) AS rep(rep) GROUP BY id ORDER BY \"Success Rate (%)\" DESC"
   },
   {
-    "name": "Persona Performance",
-    "query": "SELECT sess.persona_id AS persona_id, ROUND(AVG(rep.aggregate_score), 1) AS avg_score, COUNT(*) AS attempts FROM read_json_auto('results/*.json') AS results CROSS JOIN UNNEST(results.results) AS r(res) CROSS JOIN UNNEST(res.detail.sessions) AS s(sess) CROSS JOIN UNNEST(res.detail.reports) AS rp(rep) WHERE sess.session_id = rep.session_id AND rep.aggregate_score IS NOT NULL GROUP BY persona_id ORDER BY avg_score DESC"
+    "name": "Detailed Performance Breakdown",
+    "query": "SELECT t.participants.doctor AS id, ROUND(AVG(rep.rep.overall_empathy), 2) AS \"Empathy\", ROUND(AVG(rep.rep.overall_persuasion), 2) AS \"Persuasion\", ROUND(AVG(rep.rep.overall_safety), 2) AS \"Safety\", ROUND(AVG(rep.rep.aggregate_score), 2) AS \"Aggregate Score\", ROUND(SUM(CASE WHEN rep.rep.final_outcome = 'patient_accepted' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS \"Success Rate (%)\", COUNT(*) AS \"Sessions\" FROM results t CROSS JOIN UNNEST(t.results) AS r(res) CROSS JOIN UNNEST(r.res.detail.reports) AS rep(rep) GROUP BY id ORDER BY \"Aggregate Score\" DESC"
   },
   {
     "name": "Recent Submissions",
-    "query": "SELECT results.participants.doctor AS agent_id, res.detail.mean_aggregate_score AS score, res.detail.timestamp AS timestamp FROM read_json_auto('results/*.json') AS results CROSS JOIN UNNEST(results.results) AS r(res) ORDER BY timestamp DESC LIMIT 10"
+    "query": "SELECT t.participants.doctor AS id, ROUND(r.res.detail.mean_aggregate_score, 2) AS \"Score\", r.res.detail.timestamp AS \"Timestamp\", COUNT(s.sess) AS \"Sessions\" FROM results t CROSS JOIN UNNEST(t.results) AS r(res) CROSS JOIN UNNEST(r.res.detail.sessions) AS s(sess) GROUP BY id, \"Score\", \"Timestamp\" ORDER BY \"Timestamp\" DESC LIMIT 10"
   }
 ]

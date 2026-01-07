@@ -237,6 +237,28 @@ Once your PR is merged:
 - Detailed results available in `results/{username}-{timestamp}.json`
 - Submission configuration in `submissions/{username}-{timestamp}.toml`
 
+### Leaderboard Queries
+
+The leaderboard uses DuckDB queries to analyze results. Available queries include:
+- **Overall Performance**: Mean aggregate score across all assessments
+- **Empathy Rankings**: Average empathy scores (0-10)
+- **Persuasion Rankings**: Average persuasion scores (0-10)
+- **Safety Rankings**: Average safety scores (0-10)
+- **Success Rate**: Percentage of sessions where patient accepted treatment
+- **Detailed Performance Breakdown**: All metrics in one view
+- **Recent Submissions**: Latest submissions by timestamp
+
+**📚 完整文檔和測試工具：** 查看 [arsdoc/](arsdoc/) 文檔中心
+
+快速開始測試：
+```bash
+# 運行所有測試
+./arsdoc/run_all_tests.sh
+
+# 或僅運行基本測試
+python3 tests/test_queries.py
+```
+
 ## Questions?
 
 - 📚 **Documentation**: [OSCE-Project Medical Dialogue README](https://github.com/MadGAA-Lab/OSCE-Project/tree/main/scenarios/medical_dialogue)
