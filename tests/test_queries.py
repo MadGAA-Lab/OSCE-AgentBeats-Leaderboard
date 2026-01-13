@@ -50,6 +50,71 @@ with open(queries_path, 'r', encoding='utf-8') as f:
 
 print(f"Loaded {len(queries)} queries\n")
 
+# Validate result files structure
+print("Validating result file structure...")
+result_files = list(results_dir.glob("*.json"))
+validation_errors = []
+if not result_files:
+    print(f"WARNING: No JSON files found in {results_dir}")
+else:
+    scenarios_found = set()
+    for result_file in result_files:
+        if result_file.name == '.gitkeep':
+            continue
+        
+        try:
+            with open(result_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # Check required top-level keys
+            if 'participants' not in data:
+                validation_errors.append(f"{result_file.name}: Missing required 'participants' key")
+            else:
+                participant_keys = list(data['participants'].keys())
+                if not participant_keys:
+                    validation_errors.append(f"{result_file.name}: 'participants' object is empty")
+                else:
+                    scenarios_found.update(participant_keys)
+            
+            if 'results' not in data:
+                validation_errors.append(f"{result_file.name}: Missing required 'results' key")
+            else:
+                # Validate results is an array
+                if not isinstance(data['results'], list):
+                    validation_errors.append(f"{result_file.name}: 'results' must be an array, not {type(data['results']).__name__}")
+                elif len(data['results']) == 0:
+                    validation_errors.append(f"{result_file.name}: 'results' array is empty")
+                else:
+                    # Check that results contain detail objects
+                    for idx, result in enumerate(data['results']):
+                        if not isinstance(result, dict):
+                            validation_errors.append(f"{result_file.name}: results[{idx}] must be an object")
+                        elif 'detail' not in result:
+                            validation_errors.append(f"{result_file.name}: results[{idx}] missing 'detail' key")
+        
+        except json.JSONDecodeError as e:
+            validation_errors.append(f"{result_file.name}: Invalid JSON - {str(e)}")
+        except Exception as e:
+            validation_errors.append(f"{result_file.name}: Validation error - {str(e)}")
+    
+    if validation_errors:
+        print("  ✗ Structure validation errors found:")
+        for error in validation_errors:
+            print(f"    - {error}")
+        print()
+        print("ERROR: Result files must follow the correct structure:")
+        print("  {")
+        print("    \"participants\": { \"role1\": \"uuid1\", \"role2\": \"uuid2\" },")
+        print("    \"results\": [ { \"winner\": \"...\", \"detail\": { ... } } ]")
+        print("  }")
+        print()
+        exit(1)
+    
+    if scenarios_found:
+        print(f"  ✓ Structure validation passed")
+        print(f"  ✓ Detected scenario participant types: {', '.join(sorted(scenarios_found))}")
+    print()
+
 # Create DuckDB connection and load data
 conn = duckdb.connect()
 conn.execute(f"CREATE TABLE results AS SELECT * FROM read_json('{results_pattern}')")
