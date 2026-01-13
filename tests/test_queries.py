@@ -1,22 +1,54 @@
 """
-Test queries from root queries.json file
+Test queries from queries.json file against result JSON files
 """
 import json
 import duckdb
+import argparse
 from pathlib import Path
 
 # Get root directory (parent of tests/)
 ROOT_DIR = Path(__file__).parent.parent
 
-print("Testing queries from root queries.json...")
+# Parse command-line arguments
+parser = argparse.ArgumentParser(
+    description='Test DuckDB queries against result JSON files and validate leaderboard requirements'
+)
+parser.add_argument(
+    '--queries',
+    type=str,
+    default=str(ROOT_DIR / "tests" / "queries.json"),
+    help='Path to queries JSON file (default: tests/queries.json)'
+)
+parser.add_argument(
+    '--results-dir',
+    type=str,
+    default=str(ROOT_DIR / "results"),
+    help='Directory containing result JSON files (default: results/)'
+)
+args = parser.parse_args()
+
+queries_path = Path(args.queries)
+results_dir = Path(args.results_dir)
+results_pattern = str(results_dir / "*.json")
+
+print(f"Testing queries from {queries_path.relative_to(ROOT_DIR) if queries_path.is_relative_to(ROOT_DIR) else queries_path}...")
+print(f"Against results in {results_dir.relative_to(ROOT_DIR) if results_dir.is_relative_to(ROOT_DIR) else results_dir}/")
 print("="*60)
 
-# Load queries from root
-queries_path = ROOT_DIR / "tests" / "queries.json"
-results_pattern = str(ROOT_DIR / "results" / "*.json")
+# Validate paths exist
+if not queries_path.exists():
+    print(f"ERROR: Queries file not found: {queries_path}")
+    exit(1)
 
+if not results_dir.exists():
+    print(f"ERROR: Results directory not found: {results_dir}")
+    exit(1)
+
+# Load queries
 with open(queries_path, 'r', encoding='utf-8') as f:
     queries = json.load(f)
+
+print(f"Loaded {len(queries)} queries\n")
 
 # Create DuckDB connection and load data
 conn = duckdb.connect()
