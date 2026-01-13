@@ -18,14 +18,16 @@ results_pattern = str(ROOT_DIR / "results" / "*.json")
 with open(queries_path, 'r', encoding='utf-8') as f:
     queries = json.load(f)
 
+# Create DuckDB connection and load data
+conn = duckdb.connect()
+conn.execute(f"CREATE TABLE results AS SELECT * FROM read_json('{results_pattern}')")
+
 success = []
 failed = []
 
 for query_info in queries:
     try:
-        # Replace the results pattern in the query
-        query = query_info['query'].replace("'results/*.json'", f"'{results_pattern}'")
-        result = duckdb.sql(query)
+        result = conn.sql(query_info['query'])
         rows = result.fetchall()
         success.append(query_info['name'])
         print(f"✓ {query_info['name']}")
@@ -35,6 +37,8 @@ for query_info in queries:
     except Exception as e:
         failed.append((query_info['name'], str(e)))
         print(f"✗ {query_info['name']}: {str(e)[:100]}")
+
+conn.close()
 
 print("\n" + "="*60)
 print(f"Results: {len(success)} passed, {len(failed)} failed")
